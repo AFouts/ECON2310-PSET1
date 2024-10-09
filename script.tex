@@ -82,7 +82,6 @@
 
 
 
-The results below are generated from an R script.
 
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
@@ -145,6 +144,392 @@ The results below are generated from an R script.
 \begin{alltt}
 \hlcom{# We can see that, with this value of alpha0 there are too many observations that satisfy}
 \hlcom{#the participation condition.}
+\hlkwa{while} \hldef{(}\hlkwd{length}\hldef{(participation_condition[participation_condition}\hlopt{>}\hlnum{0}\hldef{])}\hlopt{>}\hlnum{50000}\hldef{) \{}
+   \hldef{alpha0} \hlkwb{<-} \hldef{alpha0}\hlopt{-}\hlnum{0.00001}
+   \hldef{participation_condition} \hlkwb{<-} \hldef{alpha0}\hlopt{+}\hldef{alpha1}\hlopt{*}\hldef{Ei}\hlopt{+}\hldef{alpha2}\hlopt{*}\hldef{Zi}\hlopt{+}\hldef{ui1_ui2[,}\hlnum{2}\hldef{]}
+   \hlkwd{print}\hldef{(alpha0)}
+   \hlkwd{print}\hldef{(}\hlkwd{length}\hldef{(participation_condition[participation_condition}\hlopt{>}\hlnum{0}\hldef{]))}
+\hldef{\}}
+\end{alltt}
+\begin{verbatim}
+## [1] -12.00001
+## [1] 50217
+[...]
+## [1] -12.03037
+## [1] 50000
+\end{verbatim}
+\begin{alltt}
+\hlcom{# We get alpha0=-12.03037. Explicitely set alpha0 accordingly:}
+\hldef{alpha0} \hlkwb{<-} \hlopt{-}\hlnum{12.03037}
+\hldef{participation_condition} \hlkwb{<-} \hldef{alpha0}\hlopt{+}\hldef{alpha1}\hlopt{*}\hldef{Ei}\hlopt{+}\hldef{alpha2}\hlopt{*}\hldef{Zi}\hlopt{+}\hldef{ui1_ui2[,}\hlnum{2}\hldef{]}
+\hlkwd{length}\hldef{(participation_condition[participation_condition}\hlopt{>}\hlnum{0}\hldef{])}
+\end{alltt}
+\begin{verbatim}
+## [1] 50000
+\end{verbatim}
+\begin{alltt}
+\hlcom{# Create Wi_observed and dummy participate according to the participation decision model}
+\hldef{Wi_observed} \hlkwb{<-} \hldef{Wi}
+\hldef{participate} \hlkwb{<-} \hldef{Wi}\hlopt{/}\hldef{Wi}
+\hlkwa{for} \hldef{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlkwd{length}\hldef{(participation_condition))}
+\hldef{\{}
+  \hlkwa{if} \hldef{(participation_condition[i]}\hlopt{<=}\hlnum{0}\hldef{) \{Wi_observed[i]} \hlkwb{<-}\hlnum{NA}\hldef{\}}
+  \hlkwa{if} \hldef{(participation_condition[i]}\hlopt{<=}\hlnum{0}\hldef{) \{participate[i]} \hlkwb{<-}\hlnum{0}\hldef{\}}
+\hldef{\}}
+
+\hlcom{# Computes the inverse Mills ratio derived from the participation decision model}
+\hldef{inverse_mills_ratio} \hlkwb{<-} \hlkwd{dnorm}\hldef{((alpha0}\hlopt{+}\hldef{alpha1}\hlopt{*}\hldef{Ei}\hlopt{+}\hldef{alpha2}\hlopt{*}\hldef{Zi))}\hlopt{/}\hldef{(}\hlkwd{pnorm}\hldef{((alpha0}\hlopt{+}\hldef{alpha1}\hlopt{*}\hldef{Ei}\hlopt{+}\hldef{alpha2}\hlopt{*}\hldef{Zi)))}
+
+\hlcom{# Create the dataset}
+\hldef{dataset} \hlkwb{<-} \hlkwd{data.frame}\hldef{(}\hlkwc{Wi}\hldef{=Wi,}\hlkwc{Wi_observed}\hldef{=Wi_observed,}\hlkwc{participate}\hldef{=participate,}\hlkwc{Ei}\hldef{=Ei,}\hlkwc{Zi}\hldef{=Zi,}
+                      \hlkwc{ui1}\hldef{=ui1_ui2[,}\hlnum{1}\hldef{],}\hlkwc{ui2}\hldef{=ui1_ui2[,}\hlnum{2}\hldef{],}
+                      \hlkwc{participation_condition}\hldef{=participation_condition,}
+                      \hlkwc{inverse_mills_ratio}\hldef{=inverse_mills_ratio)}
+
+\hlcom{# Estimate the parameters of the three regressions}
+\hldef{true_model} \hlkwb{<-} \hlkwd{lm}\hldef{(Wi}\hlopt{~}\hldef{Ei,} \hlkwc{data}\hldef{=dataset)}
+\hlkwd{summary}\hldef{(true_model)}
+\end{alltt}
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = Wi ~ Ei, data = dataset)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.45069 -0.06685  0.00023  0.06730  0.46423 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(>|t|)    
+## (Intercept) 3.9996045  0.0006857    5833   <2e-16 ***
+## Ei          5.0000334  0.0000664   75301   <2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.1001 on 99998 degrees of freedom
+## Multiple R-squared:      1,	Adjusted R-squared:      1 
+## F-statistic: 5.67e+09 on 1 and 99998 DF,  p-value: < 2.2e-16
+\end{verbatim}
+\begin{alltt}
+\hldef{model_those_participating} \hlkwb{<-} \hlkwd{lm}\hldef{(Wi_observed}\hlopt{~}\hldef{Ei,} \hlkwc{data}\hldef{=dataset)}
+\hlkwd{summary}\hldef{(model_those_participating)}
+\end{alltt}
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = Wi_observed ~ Ei, data = dataset)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.37495 -0.06547 -0.00046  0.06562  0.43493 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(>|t|)    
+## (Intercept) 4.0830573  0.0018275    2234   <2e-16 ***
+## Ei          4.9946553  0.0001374   36359   <2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.09757 on 49998 degrees of freedom
+##   (50000 observations deleted due to missingness)
+## Multiple R-squared:      1,	Adjusted R-squared:      1 
+## F-statistic: 1.322e+09 on 1 and 49998 DF,  p-value: < 2.2e-16
+\end{verbatim}
+\begin{alltt}
+\hldef{model_those_participating_control} \hlkwb{<-} \hlkwd{lm}\hldef{(Wi_observed}\hlopt{~}\hldef{Ei}\hlopt{+}\hldef{inverse_mills_ratio,} \hlkwc{data}\hldef{=dataset)}
+\hlkwd{summary}\hldef{(model_those_participating_control)}
+\end{alltt}
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = Wi_observed ~ Ei + inverse_mills_ratio, data = dataset)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.36271 -0.06271 -0.00188  0.06227  0.39914 
+## 
+## Coefficients:
+##                      Estimate Std. Error  t value Pr(>|t|)    
+## (Intercept)         4.0001664  0.0022322  1791.99   <2e-16 ***
+## Ei                  4.9999960  0.0001592 31403.78   <2e-16 ***
+## inverse_mills_ratio 0.0903323  0.0014909    60.59   <2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.09418 on 49997 degrees of freedom
+##   (50000 observations deleted due to missingness)
+## Multiple R-squared:      1,	Adjusted R-squared:      1 
+## F-statistic: 7.095e+08 on 2 and 49997 DF,  p-value: < 2.2e-16
+\end{verbatim}
+\begin{alltt}
+\hlcom{# Interpret the regression parameters and the direction of the bias (see copy)}
+
+\hlcom{################################################}
+\hlcom{# (b)}
+
+\hlcom{# Estimate with probit the participation decision model:}
+\hldef{participation_decision} \hlkwb{<-} \hlkwd{glm}\hldef{(participate}\hlopt{~}\hldef{Ei}\hlopt{+}\hldef{Zi,}\hlkwc{data} \hldef{= dataset,}\hlkwc{family} \hldef{=} \hlkwd{binomial}\hldef{(}\hlkwc{link} \hldef{= probit))}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred}}\begin{alltt}
+\hldef{participation_probability} \hlkwb{<-} \hlkwd{predict}\hldef{(participation_decision,dataset,}\hlkwc{type}\hldef{=}\hlsng{"response"}\hldef{)}
+\hldef{dataset} \hlkwb{<-} \hlkwd{data.frame}\hldef{(}\hlkwc{Wi}\hldef{=Wi,}\hlkwc{Wi_observed}\hldef{=Wi_observed,}\hlkwc{participate}\hldef{=participate,}\hlkwc{Ei}\hldef{=Ei,}\hlkwc{Zi}\hldef{=Zi,}
+                      \hlkwc{ui1}\hldef{=ui1_ui2[,}\hlnum{1}\hldef{],}\hlkwc{ui2}\hldef{=ui1_ui2[,}\hlnum{2}\hldef{],}
+                      \hlkwc{participation_condition}\hldef{=participation_condition,}
+                      \hlkwc{inverse_mills_ratio}\hldef{=inverse_mills_ratio,}
+                      \hlkwc{participation_probability}\hldef{=participation_probability)}
+
+\hlcom{# Draw the plots:}
+\hlkwd{plot}\hldef{(inverse_mills_ratio}\hlopt{~}\hldef{participation_probability,} \hlkwc{data}\hldef{=dataset)}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=.6\linewidth]{figure/script-Rnwauto-report-1} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{plot}\hldef{(inverse_mills_ratio}\hlopt{~}\hldef{participation_probability,} \hlkwc{data}\hldef{=}\hlkwd{subset}\hldef{(dataset,}
+                                                    \hldef{alpha0}\hlopt{+}\hldef{alpha1}\hlopt{*}\hldef{Ei}\hlopt{+}\hldef{alpha2}\hlopt{*}\hldef{Zi}\hlopt{+}\hldef{ui1_ui2[,}\hlnum{2}\hldef{]}\hlopt{>}\hlnum{0}\hldef{))}
+
+\hlcom{# Discuss the non-linearity of the inverse Mills ratio (see copy).}
+
+\hlcom{################################################}
+\hlcom{# (c)}
+
+\hlcom{# Draw the best fit line for the sample of those who participate:}
+\hldef{best_fit_line_participants} \hlkwb{<-} \hlkwd{lm}\hldef{(inverse_mills_ratio}\hlopt{~}\hldef{participation_probability,}
+                                 \hlkwc{data}\hldef{=}\hlkwd{subset}\hldef{(dataset,}
+                                 \hldef{alpha0}\hlopt{+}\hldef{alpha1}\hlopt{*}\hldef{Ei}\hlopt{+}\hldef{alpha2}\hlopt{*}\hldef{Zi}\hlopt{+}\hldef{ui1_ui2[,}\hlnum{2}\hldef{]}\hlopt{>}\hlnum{0}\hldef{))}
+\hlkwd{plot}\hldef{(inverse_mills_ratio}\hlopt{~}\hldef{participation_probability,} \hlkwc{data}\hldef{=}\hlkwd{subset}\hldef{(dataset,}
+                                                    \hldef{alpha0}\hlopt{+}\hldef{alpha1}\hlopt{*}\hldef{Ei}\hlopt{+}\hldef{alpha2}\hlopt{*}\hldef{Zi}\hlopt{+}\hldef{ui1_ui2[,}\hlnum{2}\hldef{]}\hlopt{>}\hlnum{0}\hldef{))}
+\hlkwd{abline}\hldef{(}\hlkwc{a}\hldef{=}\hlkwd{coef}\hldef{(best_fit_line_participants)[}\hlnum{1}\hldef{],} \hlkwc{b}\hldef{=}\hlkwd{coef}\hldef{(best_fit_line_participants)[}\hlnum{2}\hldef{])}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=.6\linewidth]{figure/script-Rnwauto-report-2} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlcom{# Draw the best fit line for the full sample.}
+\hldef{best_fit_line_full_sample} \hlkwb{<-} \hlkwd{lm}\hldef{(inverse_mills_ratio}\hlopt{~}\hldef{participation_probability,} \hlkwc{data}\hldef{=dataset)}
+\hlkwd{plot}\hldef{(inverse_mills_ratio}\hlopt{~}\hldef{participation_probability,} \hlkwc{data}\hldef{=dataset)}
+\hlkwd{abline}\hldef{(}\hlkwc{a}\hldef{=}\hlkwd{coef}\hldef{(best_fit_line_full_sample)[}\hlnum{1}\hldef{],} \hlkwc{b}\hldef{=}\hlkwd{coef}\hldef{(best_fit_line_full_sample)[}\hlnum{2}\hldef{])}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=.6\linewidth]{figure/script-Rnwauto-report-3} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlcom{#Write a brief description (see copy).}
+
+\hlcom{################################################}
+\hlcom{# (d)}
+
+\hlcom{# Attach all of your code.}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+The R session information (including the OS info, R version and all
+packages used):
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{sessionInfo}\hldef{()}
+\end{alltt}
+\begin{verbatim}
+## R version 4.3.2 (2023-10-31)
+## Platform: aarch64-apple-darwin20 (64-bit)
+## Running under: macOS Sonoma 14.4
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRblas.0.dylib 
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRlapack.dylib;
+## LAPACK version 3.11.0
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## time zone: America/New_York
+## tzcode source: internal
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices datasets  utils     methods   base     
+## 
+## other attached packages:
+## [1] MASS_7.3-60.0.1
+## 
+## loaded via a namespace (and not attached):
+##  [1] compiler_4.3.2 cli_3.6.3      tools_4.3.2    highr_0.11     knitr_1.48    
+##  [6] xfun_0.48      jsonlite_1.8.9 rlang_1.1.4    renv_1.0.3     evaluate_1.0.0
+\end{verbatim}
+\begin{alltt}
+\hlkwd{Sys.time}\hldef{()}
+\end{alltt}
+\begin{verbatim}
+## [1] "2024-10-08 22:36:25 EDT"
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+
+\end{document}
+\documentclass{article}\usepackage[]{graphicx}\usepackage[]{xcolor}
+% maxwidth is the original width if it is less than linewidth
+% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlsng}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hldef}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+\let\hlipl\hlkwb
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\usepackage[sc]{mathpazo}
+\renewcommand{\sfdefault}{lmss}
+\renewcommand{\ttdefault}{lmtt}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage[unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=2,
+ breaklinks=false,pdfborder={0 0 1},backref=false,colorlinks=false]
+ {hyperref}
+\hypersetup{
+ pdfstartview={XYZ null null 1}}
+
+\makeatletter
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\topfraction}{0.8}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\floatpagefraction}{0.75}
+
+\makeatother
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+
+
+
+
+
+
+
+
+The results below are generated from an R script.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# This R script runs with a renv environment available in a dedicated Github Repository.}
+\hlcom{# Below are the commands to recreate that environment in case the renv files were missing.}
+\hlcom{#install.packages(renv)}
+\hlcom{#renv::init()}
+\hlcom{#renv::install("languageserver")}
+\hlcom{#renv::install("httpgd")}
+\hlcom{#renv::install("jsonlite")}
+\hlcom{#renv::install("MASS")}
+\hlcom{#renv::snapshot()}
+\hldef{renv}\hlopt{::}\hlkwd{restore}\hldef{()}
+\end{alltt}
+\begin{verbatim}
+## - The library is already synchronized with the lockfile.
+\end{verbatim}
+\begin{alltt}
+\hlcom{################################################}
+\hlcom{# (a)}
+
+\hlcom{# Set the model's parameters a priori}
+\hldef{rho}           \hlkwb{<-} \hlnum{0.9}
+\hldef{sigma_epsilon} \hlkwb{<-} \hlnum{0.1}
+\hldef{beta0}         \hlkwb{<-} \hlnum{4}
+\hldef{beta1}         \hlkwb{<-} \hlnum{5}
+\hldef{alpha0}        \hlkwb{<-} \hlopt{-}\hlnum{12} \hlcom{# Will be tuned later.}
+\hldef{alpha1}        \hlkwb{<-} \hlnum{1}
+\hldef{alpha2}        \hlkwb{<-} \hlnum{1}
+
+\hlcom{# Generate Ei}
+\hlkwd{set.seed}\hldef{(}\hlnum{202410041}\hldef{)}
+\hldef{Ei} \hlkwb{<-} \hlkwd{round}\hldef{(}\hlkwd{abs}\hldef{(}\hlkwd{rnorm}\hldef{(}\hlnum{100000}\hldef{,} \hlnum{9}\hldef{,} \hlnum{5}\hldef{)))}
+
+\hlcom{# Generate Zi}
+\hlkwd{set.seed}\hldef{(}\hlnum{202410042}\hldef{)}
+\hldef{Zi} \hlkwb{<-} \hlkwd{rnorm}\hldef{(}\hlnum{100000}\hldef{,} \hlnum{3}\hldef{,} \hlnum{0.75}\hldef{)}
+
+\hlcom{# Generate error terms:}
+\hlkwd{set.seed}\hldef{(}\hlnum{202410043}\hldef{)}
+\hlkwd{library}\hldef{(MASS)}
+\hldef{ui1_ui2} \hlkwb{<-} \hlkwd{mvrnorm}\hldef{(}
+           \hlkwc{n} \hldef{=} \hlnum{100000}\hldef{,}
+           \hlkwc{mu} \hldef{=} \hlkwd{c}\hldef{(}\hlnum{0}\hldef{,} \hlnum{0}\hldef{),}
+           \hlkwc{Sigma} \hldef{=} \hlkwd{matrix}\hldef{(}\hlkwd{c}\hldef{(sigma_epsilon}\hlopt{^}\hlnum{2}\hldef{, rho}\hlopt{*}\hldef{sigma_epsilon, rho}\hlopt{*}\hldef{sigma_epsilon,} \hlnum{1}\hldef{),}
+                          \hlkwc{ncol} \hldef{=} \hlnum{2}\hldef{)}
+                  \hldef{)}
+
+\hlcom{# Compute Wi}
+\hldef{Wi} \hlkwb{<-} \hldef{beta0}\hlopt{+}\hldef{beta1}\hlopt{*}\hldef{Ei}\hlopt{+}\hldef{ui1_ui2[,}\hlnum{1}\hldef{]}
+
+\hlcom{# "Fine tune" alpha0 such that the participation condition is met by exactly half of the data}
+\hldef{participation_condition} \hlkwb{<-} \hldef{alpha0}\hlopt{+}\hldef{alpha1}\hlopt{*}\hldef{Ei}\hlopt{+}\hldef{alpha2}\hlopt{*}\hldef{Zi}\hlopt{+}\hldef{ui1_ui2[,}\hlnum{2}\hldef{]}
+\hlkwd{length}\hldef{(participation_condition[participation_condition}\hlopt{>}\hlnum{0}\hldef{])}
+\end{alltt}
+\begin{verbatim}
+## [1] 50217
+\end{verbatim}
+\begin{alltt}
+\hlcom{# We can see that, with this value of alpha0 there are too many observations that satisfy}
+\hlcom{# the participation condition.}
 \hlkwa{while} \hldef{(}\hlkwd{length}\hldef{(participation_condition[participation_condition}\hlopt{>}\hlnum{0}\hldef{])}\hlopt{>}\hlnum{50000}\hldef{) \{}
    \hldef{alpha0} \hlkwb{<-} \hldef{alpha0}\hlopt{-}\hlnum{0.00001}
    \hldef{participation_condition} \hlkwb{<-} \hldef{alpha0}\hlopt{+}\hldef{alpha1}\hlopt{*}\hldef{Ei}\hlopt{+}\hldef{alpha2}\hlopt{*}\hldef{Zi}\hlopt{+}\hldef{ui1_ui2[,}\hlnum{2}\hldef{]}
@@ -6397,57 +6782,6 @@ The results below are generated from an R script.
 }
 
 
-\begin{kframe}\begin{alltt}
-\hlcom{#Write a brief description (see copy).}
-
-\hlcom{################################################}
-\hlcom{# (d)}
-
-\hlcom{# Attach all of your code.}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-
-The R session information (including the OS info, R version and all
-packages used):
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{sessionInfo}\hldef{()}
-\end{alltt}
-\begin{verbatim}
-## R version 4.3.2 (2023-10-31)
-## Platform: aarch64-apple-darwin20 (64-bit)
-## Running under: macOS Sonoma 14.4
-## 
-## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRblas.0.dylib 
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
-## 
-## locale:
-## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
-## 
-## time zone: America/New_York
-## tzcode source: internal
-## 
-## attached base packages:
-## [1] stats     graphics  grDevices datasets  utils     methods   base     
-## 
-## other attached packages:
-## [1] MASS_7.3-60.0.1
-## 
-## loaded via a namespace (and not attached):
-##  [1] compiler_4.3.2 cli_3.6.3      tools_4.3.2    highr_0.11     knitr_1.48    
-##  [6] xfun_0.48      jsonlite_1.8.9 rlang_1.1.4    renv_1.0.3     evaluate_1.0.0
-\end{verbatim}
-\begin{alltt}
-\hlkwd{Sys.time}\hldef{()}
-\end{alltt}
-\begin{verbatim}
-## [1] "2024-10-08 22:36:25 EDT"
-\end{verbatim}
-\end{kframe}
 \end{knitrout}
 
 
