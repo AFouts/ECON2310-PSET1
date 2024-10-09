@@ -46,7 +46,7 @@ Wi <- beta0+beta1*Ei+ui1_ui2[,1]
 participation_condition <- alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]
 length(participation_condition[participation_condition>0])
 # We can see that, with this value of alpha0 there are too many observations that satisfy
-#the participation condition.
+# the participation condition.
 while (length(participation_condition[participation_condition>0])>50000) {
    alpha0 <- alpha0-0.00001
    participation_condition <- alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]
