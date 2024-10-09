@@ -7,6 +7,7 @@
 #renv::install("MASS")
 #renv::snapshot()
 
+
 renv::restore()
 
 ################################################
@@ -94,23 +95,38 @@ participation_decision <- glm(participate~Ei+Zi,data = dataset,family = binomial
 participation_probability <- predict(participation_decision,dataset,type="response")
 dataset <- data.frame(Wi=Wi,Wi_observed=Wi_observed,participate=participate,Ei=Ei,Zi=Zi,ui1=ui1_ui2[,1],ui2=ui1_ui2[,2],participation_condition=participation_condition,inverse_mills_ratio=inverse_mills_ratio, participation_probability=participation_probability)
 
-
-# We have P(participation_condition>0)=P(ui2>-(alpha0+alpha1*Ei+alpha2*Zi))=1-P(ui2<-(alpha0+alpha1*Ei+alpha2*Zi)).
-# But since we know the distribution of ui2 is standard normal, we can compute the probability of participation:
-participation_probability = 1-pnorm(-(alpha0+alpha1*Ei+alpha2*Zi))
-dataset <- data.frame(Wi=Wi,Wi_observed=Wi_observed,Ei=Ei,Zi=Zi,ui1=ui1_ui2[,1],ui2=ui1_ui2[,2],participation_condition=participation_condition,inverse_mills_ratio=inverse_mills_ratio, participation_probability=participation_probability)
-
 # We can draw the plots:
-plot((inverse_mills_ratio)~participation_probability, data=dataset)
-plot((inverse_mills_ratio)~participation_probability, data=subset(dataset, alpha0+alpha1*Ei+alpha2*Zi>0))
-plot((inverse_mills_ratio)~participation_probability, data=subset(dataset, alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]>0))
+plot(inverse_mills_ratio~participation_probability, data=dataset)
+plot(inverse_mills_ratio~participation_probability, data=subset(dataset, alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]>0))
 
 # Discuss the non-linearity of the inverse Mills ratio.
 
 ################################################
 # (c)
 
-# Show graphically the best fit lines for the sample who participate and the full sample. Write a brief description.
+# The best fit line for the sample who participate:
+best_fit_line_participants <- lm(inverse_mills_ratio~participation_probability, data=subset(dataset, alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]>0))
+plot(inverse_mills_ratio~participation_probability, data=subset(dataset, alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]>0))
+plot(dataset[inverse_mills_ratio],dataset[participation_probability])
+abline(a=coef(best_fit_line_participants)[1], b=coef(best_fit_line_participants)[2])
+
+abline(best_fit_line_participants)
+plot(best_fit_line_participants)
+plot(inverse_mills_ratio~participation_probability, data=dataset)
+abline(dataset[inverse_mills_ratio]~dataset[participation_probability])
+
+library(ggplot2)
+
+ggplot(dataset, aes(x=participation_probability, y=inverse_mills_ratio)) +
+    geom_point() + geom_smooth(method=lm, se=FALSE)
+
+# The best fit line for the full sample.
+best_fit_line_full_sample <- lm(inverse_mills_ratio~participation_probability, data=dataset)
+plot(inverse_mills_ratio~participation_probability, data=dataset)
+abline(a=coef(best_fit_line_full_sample)[1], b=coef(best_fit_line_full_sample)[2])
+
+
+#Write a brief description.
 
 ################################################
 # (d)
