@@ -6,8 +6,6 @@
 #renv::install("jsonlite")
 #renv::install("MASS")
 #renv::snapshot()
-
-
 renv::restore()
 
 ################################################
@@ -58,7 +56,6 @@ alpha0 <- -12.03037
 participation_condition <- alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]
 length(participation_condition[participation_condition>0])
 
-
 # Create Wi_observed and participate dummy according to the participation condition
 Wi_observed <- Wi
 participate <- Wi/Wi
@@ -69,10 +66,7 @@ for (i in 1:length(participation_condition))
 }
 
 # Computes the inverse Mills ratio for the participation equation
-standard_normal_probability_density <- function(x) {
-    (1/sqrt(2*pi))*exp(-(x^2)/(2))
-}
-inverse_mills_ratio <- dnorm((alpha0+alpha1*Ei+alpha2*Zi))/(pnorm((alpha0+alpha1*Ei+alpha2*Zi))
+inverse_mills_ratio <- dnorm((alpha0+alpha1*Ei+alpha2*Zi))/(pnorm((alpha0+alpha1*Ei+alpha2*Zi)))
 
 # Create the dataset
 dataset <- data.frame(Wi=Wi,Wi_observed=Wi_observed,participate=participate,Ei=Ei,Zi=Zi,ui1=ui1_ui2[,1],ui2=ui1_ui2[,2],participation_condition=participation_condition,inverse_mills_ratio=inverse_mills_ratio)
@@ -107,24 +101,12 @@ plot(inverse_mills_ratio~participation_probability, data=subset(dataset, alpha0+
 # The best fit line for the sample who participate:
 best_fit_line_participants <- lm(inverse_mills_ratio~participation_probability, data=subset(dataset, alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]>0))
 plot(inverse_mills_ratio~participation_probability, data=subset(dataset, alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]>0))
-plot(dataset[inverse_mills_ratio],dataset[participation_probability])
 abline(a=coef(best_fit_line_participants)[1], b=coef(best_fit_line_participants)[2])
-
-abline(best_fit_line_participants)
-plot(best_fit_line_participants)
-plot(inverse_mills_ratio~participation_probability, data=dataset)
-abline(dataset[inverse_mills_ratio]~dataset[participation_probability])
-
-library(ggplot2)
-
-ggplot(dataset, aes(x=participation_probability, y=inverse_mills_ratio)) +
-    geom_point() + geom_smooth(method=lm, se=FALSE)
 
 # The best fit line for the full sample.
 best_fit_line_full_sample <- lm(inverse_mills_ratio~participation_probability, data=dataset)
 plot(inverse_mills_ratio~participation_probability, data=dataset)
 abline(a=coef(best_fit_line_full_sample)[1], b=coef(best_fit_line_full_sample)[2])
-
 
 #Write a brief description.
 
