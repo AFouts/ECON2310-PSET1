@@ -1,4 +1,5 @@
-# This R script runs with a renv environment available in a dedicated Github Repository. Below are the commands to recreate that environment, in case yo
+# This R script runs with a renv environment available in a dedicated Github Repository.
+# Below are the commands to recreate that environment in case the renv files were missing.
 #install.packages(renv)
 #renv::init()
 #renv::install("languageserver")
@@ -41,22 +42,23 @@ ui1_ui2 <- mvrnorm(
 # Compute Wi
 Wi <- beta0+beta1*Ei+ui1_ui2[,1]
 
-# Fine tune alpha0 such that the participation condition is met by exactly half of the data
+# "Fine tune" alpha0 such that the participation condition is met by exactly half of the data
 participation_condition <- alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]
 length(participation_condition[participation_condition>0])
-# We can see that, with this value of alpha0 there are too many observations that satisfy the participation condition.
+# We can see that, with this value of alpha0 there are too many observations that satisfy
+#the participation condition.
 while (length(participation_condition[participation_condition>0])>50000) {
    alpha0 <- alpha0-0.00001
    participation_condition <- alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]
    print(alpha0)
    print(length(participation_condition[participation_condition>0]))
 } 
-# We get alpha0=-12.03036. Explicitely set alpha0 accordingly:
+# We get alpha0=-12.03037. Explicitely set alpha0 accordingly:
 alpha0 <- -12.03037
 participation_condition <- alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]
 length(participation_condition[participation_condition>0])
 
-# Create Wi_observed and participate dummy according to the participation condition
+# Create Wi_observed and dummy participate according to the participation decision model
 Wi_observed <- Wi
 participate <- Wi/Wi
 for (i in 1:length(participation_condition))
@@ -65,11 +67,14 @@ for (i in 1:length(participation_condition))
   if (participation_condition[i]<=0) {participate[i] <-0}
 }
 
-# Computes the inverse Mills ratio for the participation equation
+# Computes the inverse Mills ratio derived from the participation decision model
 inverse_mills_ratio <- dnorm((alpha0+alpha1*Ei+alpha2*Zi))/(pnorm((alpha0+alpha1*Ei+alpha2*Zi)))
 
 # Create the dataset
-dataset <- data.frame(Wi=Wi,Wi_observed=Wi_observed,participate=participate,Ei=Ei,Zi=Zi,ui1=ui1_ui2[,1],ui2=ui1_ui2[,2],participation_condition=participation_condition,inverse_mills_ratio=inverse_mills_ratio)
+dataset <- data.frame(Wi=Wi,Wi_observed=Wi_observed,participate=participate,Ei=Ei,Zi=Zi,
+                      ui1=ui1_ui2[,1],ui2=ui1_ui2[,2],
+                      participation_condition=participation_condition,
+                      inverse_mills_ratio=inverse_mills_ratio)
 
 # Estimate the parameters of the three regressions
 true_model <- lm(Wi~Ei, data=dataset)
@@ -79,7 +84,7 @@ summary(model_those_participating)
 model_those_participating_control <- lm(Wi_observed~Ei+inverse_mills_ratio, data=dataset)
 summary(model_those_participating_control)
 
-# Interpret the regression parameters and the direction of the bias
+# Interpret the regression parameters and the direction of the bias (see copy)
 
 ################################################
 # (b)
@@ -87,28 +92,36 @@ summary(model_those_participating_control)
 # Estimate with probit the participation decision model:
 participation_decision <- glm(participate~Ei+Zi,data = dataset,family = binomial(link = probit))
 participation_probability <- predict(participation_decision,dataset,type="response")
-dataset <- data.frame(Wi=Wi,Wi_observed=Wi_observed,participate=participate,Ei=Ei,Zi=Zi,ui1=ui1_ui2[,1],ui2=ui1_ui2[,2],participation_condition=participation_condition,inverse_mills_ratio=inverse_mills_ratio, participation_probability=participation_probability)
+dataset <- data.frame(Wi=Wi,Wi_observed=Wi_observed,participate=participate,Ei=Ei,Zi=Zi,
+                      ui1=ui1_ui2[,1],ui2=ui1_ui2[,2],
+                      participation_condition=participation_condition,
+                      inverse_mills_ratio=inverse_mills_ratio,
+                      participation_probability=participation_probability)
 
-# We can draw the plots:
+# Draw the plots:
 plot(inverse_mills_ratio~participation_probability, data=dataset)
-plot(inverse_mills_ratio~participation_probability, data=subset(dataset, alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]>0))
+plot(inverse_mills_ratio~participation_probability, data=subset(dataset,
+                                                    alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]>0))
 
-# Discuss the non-linearity of the inverse Mills ratio.
+# Discuss the non-linearity of the inverse Mills ratio (see copy).
 
 ################################################
 # (c)
 
-# The best fit line for the sample who participate:
-best_fit_line_participants <- lm(inverse_mills_ratio~participation_probability, data=subset(dataset, alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]>0))
-plot(inverse_mills_ratio~participation_probability, data=subset(dataset, alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]>0))
+# Draw the best fit line for the sample of those who participate:
+best_fit_line_participants <- lm(inverse_mills_ratio~participation_probability,
+                                 data=subset(dataset,
+                                 alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]>0))
+plot(inverse_mills_ratio~participation_probability, data=subset(dataset,
+                                                    alpha0+alpha1*Ei+alpha2*Zi+ui1_ui2[,2]>0))
 abline(a=coef(best_fit_line_participants)[1], b=coef(best_fit_line_participants)[2])
 
-# The best fit line for the full sample.
+# Draw the best fit line for the full sample.
 best_fit_line_full_sample <- lm(inverse_mills_ratio~participation_probability, data=dataset)
 plot(inverse_mills_ratio~participation_probability, data=dataset)
 abline(a=coef(best_fit_line_full_sample)[1], b=coef(best_fit_line_full_sample)[2])
 
-#Write a brief description.
+#Write a brief description (see copy).
 
 ################################################
 # (d)
